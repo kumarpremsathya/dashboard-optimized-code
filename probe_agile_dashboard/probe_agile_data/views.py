@@ -32,6 +32,8 @@ import sys
 import pandas as pd
 
 from django.db.models import F
+from django.http import HttpResponseServerError
+import traceback
 
 # Add the directory containing probe_agile_data to the Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -40,118 +42,126 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Function for rendering the dashboard
 def rbinewhome(request): 
-    # Get the current date
-    end_date = timezone.now().date()
-    # Get the start date by subtracting 6 days from the end date
-    start_date = end_date - timedelta(days=6)
-    
-    # Combine database queries , List of source names
-    source_names = ['rbi_fema', 'rbi_ecb', 'rbi_odi', 'startupindia', 'sebi_ed_cgm', 'sebi_settlementorder', 'sebi_ao', 'sebi_chairperson_members', 'mca_roc', 'mca_rd']
-    
-    # Initialize dictionaries to store data
-    data = {}
-    latest_counts = {}
-    recent_statuses = {}
-    recent_colors = {}
-    
-    # Loop through each source name
-    for source_name in source_names:
+    try:
+        # Get the current date
+        end_date = timezone.now().date()
+        # Get the start date by subtracting 6 days from the end date
+        start_date = end_date - timedelta(days=6)
         
-        # Check which database the source belongs to
-        if rbi_log.objects.using('rbi').filter(source_name=source_name).exists():
-            # Use 'rbi' database
-            db_name = 'rbi'
-            model = rbi_log
-        elif sebi_log.objects.using('sebi').filter(source_name=source_name).exists():
-            # Use 'sebi' database
-            db_name = 'sebi'
-            model = sebi_log
-        elif mca_log.objects.using('mca').filter(source_name=source_name).exists():
-            # Use 'sebi' database
-            db_name = 'mca'
-            model = mca_log
-        else:
-            # Handle other cases or raise an error
-            continue  # or raise an error
+        # Combine database queries , List of source names
+        source_names = ['rbi_fema', 'rbi_ecb', 'rbi_odi', 'startupindia', 'sebi_ed_cgm', 'sebi_settlementorder', 'sebi_ao', 'sebi_chairperson_members', 'mca_roc', 'mca_rd']
         
-        # Query the database for data within the specified date range
-        data[source_name] = model.objects.using(db_name).filter(source_name=source_name, date_of_scraping__date__range=[start_date, end_date]).order_by('-date_of_scraping')
+        # Initialize dictionaries to store data
+        data = {}
+        latest_counts = {}
+        recent_statuses = {}
+        recent_colors = {}
         
-        # Get the latest entry for the source status
-        latest_entry = get_latest_entry(db_name, source_name, model)
-        
-        # Get the latest total count for the source
-        latest_counts[source_name] = get_latest_count(latest_entry)
-        
-        # Get the recent status for the source status
-        recent_statuses[source_name] = latest_entry.source_status if latest_entry else 'N/A'
-        
-        # Get the color for the recent status of the source
-        recent_colors[source_name] = get_color_for_source_status(recent_statuses[source_name])
-    
-    # Prepare data list for rendering in the template
-    data_list = []
-    for date in (end_date - timedelta(days=i) for i in range(7)):
-        data_entry = {}
+        # Loop through each source name
         for source_name in source_names:
-            if source_name not in data:
-                continue
-            entry = data[source_name].filter(date_of_scraping__date=date).first()
-            data_available, data_scraped, status, reason = get_entry_info(entry)
-            color = get_color(status, reason)
-            data_entry[f'{source_name}_Data_Available'] = data_available
-            data_entry[f'{source_name}_Data_Scraped'] = data_scraped
-            data_entry[f'{source_name}_Color'] = color
-        data_entry['Date'] = date.strftime('%d-%m-%Y')
-        data_list.append(data_entry)
-    
-    # Prepare context for rendering the template
-    context = {
-        'data_list': data_list, 
-        'latest_counts': latest_counts, 
-        'recent_statuses': recent_statuses,
-        'recent_colors': recent_colors,
-    }
-    
-    
-    # Convert data to DataFrame for printing value in terminal
-    data_df = pd.DataFrame(data_list)
-    counts_df = pd.DataFrame(latest_counts.items(), columns=['Source', 'Latest Count'])
-    statuses_df = pd.DataFrame(recent_statuses.items(), columns=['Source', 'Recent Status'])
-    colors_df = pd.DataFrame(recent_colors.items(), columns=['Source', 'Recent Color'])
+            
+            # Check which database the source belongs to
+            if rbi_log.objects.using('rbi').filter(source_name=source_name).exists():
+                # Use 'rbi' database
+                db_name = 'rbi'
+                model = rbi_log
+            elif sebi_log.objects.using('sebi').filter(source_name=source_name).exists():
+                # Use 'sebi' database
+                db_name = 'sebi'
+                model = sebi_log
+            elif mca_log.objects.using('mca').filter(source_name=source_name).exists():
+                # Use 'sebi' database
+                db_name = 'mca'
+                model = mca_log
+            else:
+                # Handle other cases or raise an error
+                continue  # or raise an error
+            
+            # Query the database for data within the specified date range
+            data[source_name] = model.objects.using(db_name).filter(source_name=source_name, date_of_scraping__date__range=[start_date, end_date]).order_by('-date_of_scraping')
+            
+            # Get the latest entry for the source status
+            latest_entry = get_latest_entry(db_name, source_name, model)
+            
+            # Get the latest total count for the source
+            latest_counts[source_name] = get_latest_count(latest_entry)
+            
+            # Get the recent status for the source status
+            recent_statuses[source_name] = latest_entry.source_status if latest_entry else 'N/A'
+            
+            # Get the color for the recent status of the source
+            recent_colors[source_name] = get_color_for_source_status(recent_statuses[source_name])
+        
+        # Prepare data list for rendering in the template
+        data_list = []
+        for date in (end_date - timedelta(days=i) for i in range(7)):
+            data_entry = {}
+            for source_name in source_names:
+                if source_name not in data:
+                    continue
+                entry = data[source_name].filter(date_of_scraping__date=date).first()
+                data_available, data_scraped, status, reason = get_entry_info(entry)
+                color = get_color(status, reason)
+                data_entry[f'{source_name}_Data_Available'] = data_available
+                data_entry[f'{source_name}_Data_Scraped'] = data_scraped
+                data_entry[f'{source_name}_Color'] = color
+            data_entry['Date'] = date.strftime('%d-%m-%Y')
+            data_list.append(data_entry)
+        
+        # Prepare context for rendering the template
+        context = {
+            'data_list': data_list, 
+            'latest_counts': latest_counts, 
+            'recent_statuses': recent_statuses,
+            'recent_colors': recent_colors,
+        }
+        
+        
+        # Convert data to DataFrame for printing value in terminal
+        data_df = pd.DataFrame(data_list)
+        counts_df = pd.DataFrame(latest_counts.items(), columns=['Source', 'Latest Count'])
+        statuses_df = pd.DataFrame(recent_statuses.items(), columns=['Source', 'Recent Status'])
+        colors_df = pd.DataFrame(recent_colors.items(), columns=['Source', 'Recent Color'])
 
-   
-    # Set display options to show all columns in terminal
-    pd.set_option('display.max_columns', None)
+    
+        # Set display options to show all columns in terminal
+        pd.set_option('display.max_columns', None)
 
-    # Print the DataFrames in terminal
-    print("Data List DataFrame:")
-    print(data_df)
-    print("\nLatest Counts DataFrame:")
-    print(counts_df)
-    print("\nRecent Statuses DataFrame:")
-    print(statuses_df)
-    print("\nRecent Colors DataFrame:")
-    print(colors_df)
-    
-    # Convert DataFrame to HTML to see html page 
-    data_html = data_df.to_html()
-    counts_html = counts_df.to_html()
-    statuses_html = statuses_df.to_html()
-    colors_html = colors_df.to_html()
+        # Print the DataFrames in terminal
+        print("Data List DataFrame:")
+        print(data_df)
+        print("\nLatest Counts DataFrame:")
+        print(counts_df)
+        print("\nRecent Statuses DataFrame:")
+        print(statuses_df)
+        print("\nRecent Colors DataFrame:")
+        print(colors_df)
+        
+        # Convert DataFrame to HTML to see html page 
+        data_html = data_df.to_html()
+        counts_html = counts_df.to_html()
+        statuses_html = statuses_df.to_html()
+        colors_html = colors_df.to_html()
 
-    # Print HTML tables in terminal 
-    print("Data List HTML Table:")
-    print(data_html)
-    print("\nLatest Counts HTML Table:")
-    print(counts_html)
-    print("\nRecent Statuses HTML Table:")
-    print(statuses_html)
-    print("\nRecent Colors HTML Table:")
-    print(colors_html)
-    
-    
-    return render(request, 'fema/grid123.html', context)
+        # Print HTML tables in terminal 
+        print("Data List HTML Table:")
+        print(data_html)
+        print("\nLatest Counts HTML Table:")
+        print(counts_html)
+        print("\nRecent Statuses HTML Table:")
+        print(statuses_html)
+        print("\nRecent Colors HTML Table:")
+        print(colors_html)
+        
+        
+        return render(request, 'fema/grid123.html', context)
+    except Exception as e:
+        # Log and print the exception
+        traceback.print_exc()
+        print("An exception occurred:", e)
+        
+        # Handle the exception and provide an appropriate response
+        return HttpResponseServerError("An error occurred while rendering the dashboard. Please try again later.")
 
 
 # Function to extract relevant information from a database entry and format it appropriately
@@ -170,17 +180,22 @@ def get_entry_info(entry):
             - script_status: The status of the script.
             - failure_reason: The reason for failure, if any.
     """
-    if entry:
-        script_status = entry.script_status
-        if script_status == 'not run':
-            data_available = '0' if entry.data_available is None else entry.data_available
-            data_scraped = '0' if entry.data_scraped is None else entry.data_scraped
-        else:
-            data_available = entry.data_available if entry.data_available is not None else '0' if entry.script_status == 'Success' else 'NA'
-            data_scraped = entry.data_scraped if entry.data_scraped is not None else '0' if entry.script_status == 'Success' else 'NA'
-        return data_available, data_scraped, script_status, entry.failure_reason
-    return '-', '-', 'N/A', None
-   
+    try:
+        if entry:
+            script_status = entry.script_status
+            if script_status == 'not run':
+                data_available = '0' if entry.data_available is None else entry.data_available
+                data_scraped = '0' if entry.data_scraped is None else entry.data_scraped
+            else:
+                data_available = entry.data_available if entry.data_available is not None else '0' if entry.script_status == 'Success' else 'NA'
+                data_scraped = entry.data_scraped if entry.data_scraped is not None else '0' if entry.script_status == 'Success' else 'NA'
+            return data_available, data_scraped, script_status, entry.failure_reason
+        return '-', '-', 'N/A', None
+    except Exception as e:
+        # Log and print the exception
+        traceback.print_exc()
+        print("Exception in get_entry_info:", e)
+    
 
  # Get the latest entry for the source status    
 def get_latest_entry(db_name, source_name, model):
@@ -213,18 +228,27 @@ def get_latest_entry(db_name, source_name, model):
 
     except ObjectDoesNotExist:
         pass
-
+    except Exception as e:
+        # Log and print the exception
+        traceback.print_exc()
+        print("Exception in get_latest_entry:", e)
     return None  # Return None if no status is found
+
 
 # Get the latest total count for the source
 def get_latest_count(entry):
-    if entry:
-        if entry.total_record_count is not None:
-            return str(entry.total_record_count)
-        elif entry.script_status == 'Success':
-            return '0'
-    return '-'
-
+    try:
+        if entry:
+            if entry.total_record_count is not None:
+                return str(entry.total_record_count)
+            elif entry.script_status == 'Success':
+                return '0'
+        return '-'
+    except Exception as e:
+        # Log and print the exception
+        traceback.print_exc()
+        print("Exception in get_latest_count:", e)
+   
 
 #set the colour for data_available and data_scraped with respect to script status such as Success and failure 
 def get_color(status, reason=None):
@@ -252,31 +276,32 @@ def get_color_for_source_status(status):
 
 
 def rbiget_data_for_popup1(request, source_name):
-    today_date = timezone.now().date()
-    
-    # Initialize db_name and model variables
-    db_name = None
-    model = None
-    
-    # Check if the source name exists in 'rbi' database
-    if rbi_log.objects.using('rbi').filter(source_name=source_name).exists():
-        db_name = 'rbi'
-        model = rbi_log
-        
-    # Check if the source name exists in 'sebi' database
-    elif sebi_log.objects.using('sebi').filter(source_name=source_name).exists():
-        db_name = 'sebi'
-        model = sebi_log
-        
-    # Check if the source name exists in 'mca_orders' database
-    elif mca_log.objects.using('mca_orders').filter(source_name=source_name).exists():
-        db_name = 'mca'
-        model = mca_log
-    else:
-        # Handle other cases or raise an error
-        return HttpResponse(status=404)
-
     try:
+        today_date = timezone.now().date()
+        
+        # Initialize db_name and model variables
+        db_name = None
+        model = None
+        
+        # Check if the source name exists in 'rbi' database
+        if rbi_log.objects.using('rbi').filter(source_name=source_name).exists():
+            db_name = 'rbi'
+            model = rbi_log
+            
+        # Check if the source name exists in 'sebi' database
+        elif sebi_log.objects.using('sebi').filter(source_name=source_name).exists():
+            db_name = 'sebi'
+            model = sebi_log
+            
+        # Check if the source name exists in 'mca_orders' database
+        elif mca_log.objects.using('mca_orders').filter(source_name=source_name).exists():
+            db_name = 'mca'
+            model = mca_log
+        else:
+            # Handle other cases or raise an error
+            return HttpResponse(status=404)
+
+        
         # Query the appropriate database and model
         data = model.objects.using(db_name)\
             .filter(source_name=source_name, date_of_scraping__date=today_date)\
@@ -298,9 +323,12 @@ def rbiget_data_for_popup1(request, source_name):
             return HttpResponse(json.dumps(response_data), content_type="application/json")
         else:
             return HttpResponse(status=404)
-    except ObjectDoesNotExist:
-        return HttpResponse(status=404)    
-
+          
+    except Exception as e:
+        # Log and print the exception
+        traceback.print_exc()
+        print("Exception in rbiget_data_for_popup1:", e)
+        return HttpResponseServerError("An error occurred while retrieving data. Please try again later.")
 
 
 ###################################################################################################################################################
@@ -369,93 +397,100 @@ def get_status_color(script_status, failure_reason):
 """navigation page , Filter and process data based on date range and source name. dropdown functionality included """
 def filter_data(request, source_name, model, db_name):
     """Filter and process data based on date range and source name."""
-    form = DateRangeForm(request.GET)
-    
-    # Default values for start_date and end_date
-    start_date, end_date = get_default_start_end_dates()
-    
-    if form.is_valid():
-        date_range = form.cleaned_data.get('date_range')
-        if date_range == 'past_7_days':
-            start_date, end_date = get_default_start_end_dates()
-        elif date_range == 'past_15_days':
-            start_date, end_date = get_past_15_days()
-        elif date_range == 'past_month':
-            start_date, end_date = get_past_month()
-        elif date_range == 'custom':
-            start_date = form.cleaned_data.get('start_date')
-            end_date = form.cleaned_data.get('end_date')
-            if start_date and end_date:
-                date_difference = end_date - start_date
-                if date_difference.days > 60:
-                    # Adjust end_date if it's more than 60 days from start_date
-                    end_date = start_date + timedelta(days=60)
-        else:
-            start_date, end_date = get_default_start_end_dates()
-
-    # Adjust end_date to cover the entire day
-    # end_date = end_date + timedelta(days=1)
-    
-    
-    # Query the database with the adjusted date range
-    unique_dates = model.objects.using(db_name).filter(
-        date_of_scraping__date__range=[start_date, end_date],
-        source_name=source_name
-        ).values('date_of_scraping__date').distinct().order_by('-date_of_scraping__date')
-
-    formatted_data = []
-    for unique_date in unique_dates:
-        latest_entry = model.objects.using(db_name).filter(
-            source_name=source_name,
-            date_of_scraping__date=unique_date['date_of_scraping__date']
-        ).order_by('-date_of_scraping').first()  # Use first() instead of latest() for sorting in descending order
-
-        formatted_date = format_date(latest_entry.date_of_scraping)
-        status_color = get_status_color(latest_entry.script_status, latest_entry.failure_reason)
-
-        data_available = latest_entry.data_available if latest_entry.data_available is not None else "0"
-        data_scraped = latest_entry.data_scraped if latest_entry.data_scraped is not None else "0"
-        failure_reason = latest_entry.failure_reason if latest_entry.failure_reason is not None else "-"
-
-        formatted_data.append({
-            'source_name': latest_entry.source_name,
-            'script_status': latest_entry.script_status,
-            'failure_reason': failure_reason,
-            'data_available': data_available,
-            'data_scraped': data_scraped,
-            'date_of_scraping': formatted_date,
-            'status_color': status_color,
-        })
+    try:
+        form = DateRangeForm(request.GET)
         
-    
-    # Handle export to Excel functionality
-    if 'download' in request.GET:
-        date_range = request.GET.get('date_range', 'past_7_days')
-        start_date = request.GET.get('start_date')
-        end_date = request.GET.get('end_date')
+        # Default values for start_date and end_date
+        start_date, end_date = get_default_start_end_dates()
+        
+        if form.is_valid():
+            date_range = form.cleaned_data.get('date_range')
+            if date_range == 'past_7_days':
+                start_date, end_date = get_default_start_end_dates()
+            elif date_range == 'past_15_days':
+                start_date, end_date = get_past_15_days()
+            elif date_range == 'past_month':
+                start_date, end_date = get_past_month()
+            elif date_range == 'custom':
+                start_date = form.cleaned_data.get('start_date')
+                end_date = form.cleaned_data.get('end_date')
+                if start_date and end_date:
+                    date_difference = end_date - start_date
+                    if date_difference.days > 60:
+                        # Adjust end_date if it's more than 60 days from start_date
+                        end_date = start_date + timedelta(days=60)
+            else:
+                start_date, end_date = get_default_start_end_dates()
 
-        # Call the export_to_excel function with the selected date range
-        return export_to_excel(request, formatted_data, date_range, start_date, end_date, source_name, model, db_name)
-    
-    
-    recent_status, recent_color = get_recent_status_and_color(source_name, model, db_name)
+        # Adjust end_date to cover the entire day
+        # end_date = end_date + timedelta(days=1)
+        
+        
+        # Query the database with the adjusted date range
+        unique_dates = model.objects.using(db_name).filter(
+            date_of_scraping__date__range=[start_date, end_date],
+            source_name=source_name
+            ).values('date_of_scraping__date').distinct().order_by('-date_of_scraping__date')
 
-    
-    # Prepare context for rendering the template
-    context = {
-        'form': form,
-        'data': formatted_data,
-        'start_date': format_date(start_date),
-        'end_date': format_date(end_date),
-        'past_15_days': (format_date(get_past_15_days()[0]), format_date(get_past_15_days()[1])),
-        'last_month': (format_date(get_past_month()[0]), format_date(get_past_month()[1])),
-        'source_name': source_name,
-        'recent_status': recent_status,
-        'recent_color': recent_color,
-       
-    }
+        formatted_data = []
+        for unique_date in unique_dates:
+            latest_entry = model.objects.using(db_name).filter(
+                source_name=source_name,
+                date_of_scraping__date=unique_date['date_of_scraping__date']
+            ).order_by('-date_of_scraping').first()  # Use first() instead of latest() for sorting in descending order
 
-    return render(request, 'fema/gridfilter.html', context)
+            formatted_date = format_date(latest_entry.date_of_scraping)
+            status_color = get_status_color(latest_entry.script_status, latest_entry.failure_reason)
+
+            data_available = latest_entry.data_available if latest_entry.data_available is not None else "0"
+            data_scraped = latest_entry.data_scraped if latest_entry.data_scraped is not None else "0"
+            failure_reason = latest_entry.failure_reason if latest_entry.failure_reason is not None else "-"
+
+            formatted_data.append({
+                'source_name': latest_entry.source_name,
+                'script_status': latest_entry.script_status,
+                'failure_reason': failure_reason,
+                'data_available': data_available,
+                'data_scraped': data_scraped,
+                'date_of_scraping': formatted_date,
+                'status_color': status_color,
+            })
+            
+        
+        # Handle export to Excel functionality
+        if 'download' in request.GET:
+            date_range = request.GET.get('date_range', 'past_7_days')
+            start_date = request.GET.get('start_date')
+            end_date = request.GET.get('end_date')
+
+            # Call the export_to_excel function with the selected date range
+            return export_to_excel(request, formatted_data, date_range, start_date, end_date, source_name, model, db_name)
+        
+        
+        recent_status, recent_color = get_recent_status_and_color(source_name, model, db_name)
+
+        
+        # Prepare context for rendering the template
+        context = {
+            'form': form,
+            'data': formatted_data,
+            'start_date': format_date(start_date),
+            'end_date': format_date(end_date),
+            'past_15_days': (format_date(get_past_15_days()[0]), format_date(get_past_15_days()[1])),
+            'last_month': (format_date(get_past_month()[0]), format_date(get_past_month()[1])),
+            'source_name': source_name,
+            'recent_status': recent_status,
+            'recent_color': recent_color,
+        
+        }
+
+        return render(request, 'fema/gridfilter.html', context)
+    
+    except Exception as e:
+        # Log and print the exception
+        traceback.print_exc()
+        print("Exception in filter_data:", e)
+        return HttpResponseServerError("An error occurred while processing the data.")
 
 
 
@@ -516,82 +551,93 @@ def get_recent_status_and_color(source_name, model, db_name):
 
     except ObjectDoesNotExist:
         pass
-
+    except Exception as e:
+        # Log and print the exception
+        traceback.print_exc()
+        print("Exception in get_recent_status_and_color:", e)
     return 'N/A', 'black'
+
 
 """ funcionality for Export data to an Excel file."""
 def export_to_excel(request, data, date_range, start_date, end_date, source_name, model, db_name):
     """Export data to an Excel file."""
-    if date_range == 'past_15_days':
-        end_date = datetime.now().date()
-        start_date = end_date - timedelta(days=14)
-    elif date_range == 'past_month':
-        today = datetime.now().date()
-        end_date = today
-        start_date = today - timedelta(days=29)
-    elif date_range == 'custom':
-        # Add logic to handle custom view start_date and end_date
-        if start_date and end_date:
-            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    try:
+        if date_range == 'past_15_days':
+            end_date = datetime.now().date()
+            start_date = end_date - timedelta(days=14)
+        elif date_range == 'past_month':
+            today = datetime.now().date()
+            end_date = today
+            start_date = today - timedelta(days=29)
+        elif date_range == 'custom':
+            # Add logic to handle custom view start_date and end_date
+            if start_date and end_date:
+                start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+                end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+            else:
+                # Default to past 7 days if no specific range is selected
+                end_date = datetime.now().date()
+                start_date = end_date - timedelta(days=6)
         else:
             # Default to past 7 days if no specific range is selected
             end_date = datetime.now().date()
             start_date = end_date - timedelta(days=6)
-    else:
-        # Default to past 7 days if no specific range is selected
-        end_date = datetime.now().date()
-        start_date = end_date - timedelta(days=6)
-        
-    # Get the latest data for each unique date
-    unique_dates = model.objects.using(db_name).filter(
-        date_of_scraping__date__range=[start_date, end_date],
-        source_name=source_name
-    ).values('date_of_scraping__date').distinct()
+            
+        # Get the latest data for each unique date
+        unique_dates = model.objects.using(db_name).filter(
+            date_of_scraping__date__range=[start_date, end_date],
+            source_name=source_name
+        ).values('date_of_scraping__date').distinct()
 
-    latest_data = []
-    for unique_date in unique_dates:
-        latest_entry = model.objects.using(db_name).filter(
-            source_name=source_name,
-            date_of_scraping__date=unique_date['date_of_scraping__date']
-        ).order_by('-date_of_scraping').first()
+        latest_data = []
+        for unique_date in unique_dates:
+            latest_entry = model.objects.using(db_name).filter(
+                source_name=source_name,
+                date_of_scraping__date=unique_date['date_of_scraping__date']
+            ).order_by('-date_of_scraping').first()
 
-        if latest_entry:
-            latest_data.append(latest_entry)
+            if latest_entry:
+                latest_data.append(latest_entry)
 
-    # Generate a dynamic filename based on source name and date range
-    filename = f"{source_name}_{start_date}_{end_date}.xlsx"
+        # Generate a dynamic filename based on source name and date range
+        filename = f"{source_name}_{start_date}_{end_date}.xlsx"
 
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = f'attachment; filename={filename}'
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename={filename}'
 
-    # Generate Excel file
-    workbook = Workbook()
-    worksheet = workbook.active
+        # Generate Excel file
+        workbook = Workbook()
+        worksheet = workbook.active
 
-    # Add headers to the worksheet
-    header_font = Font(bold=True)
-    headers = ['Source Name', 'Status', '#Records Available', '#Records Scraped', 'Failure Reason', 'Scraped On']
+        # Add headers to the worksheet
+        header_font = Font(bold=True)
+        headers = ['Source Name', 'Status', '#Records Available', '#Records Scraped', 'Failure Reason', 'Scraped On']
 
-    for col_num, header in enumerate(headers, start=1):
-        cell = worksheet.cell(row=1, column=col_num, value=header)
-        cell.font = header_font
-        
-    # Populate data in the worksheet
-    latest_data.reverse()  # Reverse the order to go from latest to previous
+        for col_num, header in enumerate(headers, start=1):
+            cell = worksheet.cell(row=1, column=col_num, value=header)
+            cell.font = header_font
+            
+        # Populate data in the worksheet
+        latest_data.reverse()  # Reverse the order to go from latest to previous
 
-    # Populate data in the worksheet
-    for row_num, data_entry in enumerate(latest_data, start=2):
-        worksheet.cell(row=row_num, column=1, value=data_entry.source_name)
-        worksheet.cell(row=row_num, column=2, value=data_entry.script_status)
-        worksheet.cell(row=row_num, column=3, value=data_entry.data_available if data_entry.data_available is not None else "0")
-        worksheet.cell(row=row_num, column=4, value=data_entry.data_scraped if data_entry.data_scraped is not None else "0")
-        worksheet.cell(row=row_num, column=5, value=data_entry.failure_reason or "-")
-        worksheet.cell(row=row_num, column=6, value=format_date(data_entry.date_of_scraping))
+        # Populate data in the worksheet
+        for row_num, data_entry in enumerate(latest_data, start=2):
+            worksheet.cell(row=row_num, column=1, value=data_entry.source_name)
+            worksheet.cell(row=row_num, column=2, value=data_entry.script_status)
+            worksheet.cell(row=row_num, column=3, value=data_entry.data_available if data_entry.data_available is not None else "0")
+            worksheet.cell(row=row_num, column=4, value=data_entry.data_scraped if data_entry.data_scraped is not None else "0")
+            worksheet.cell(row=row_num, column=5, value=data_entry.failure_reason or "-")
+            worksheet.cell(row=row_num, column=6, value=format_date(data_entry.date_of_scraping))
 
-    # Save the workbook and prepare the response for download
-    workbook.save(response)
-    return response
+        # Save the workbook and prepare the response for download
+        workbook.save(response)
+        return response
+    except Exception as e:
+        # Log and print the exception
+        traceback.print_exc()
+        print("Exception in export_to_excel:", e)
+        return HttpResponseServerError("An error occurred while exporting data to Excel.")
+    
 
 ###################################################################################################################################################
 

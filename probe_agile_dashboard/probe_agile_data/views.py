@@ -35,6 +35,7 @@ from django.db.models import F
 from django.http import HttpResponseServerError
 import traceback
 
+
 # Add the directory containing probe_agile_data to the Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -107,6 +108,7 @@ def rbinewhome(request):
                 data_entry[f'{source_name}_Color'] = color
             data_entry['Date'] = date.strftime('%d-%m-%Y')
             data_list.append(data_entry)
+        print("data_list===", data_list) 
         
         # Prepare context for rendering the template
         context = {
@@ -115,8 +117,10 @@ def rbinewhome(request):
             'recent_statuses': recent_statuses,
             'recent_colors': recent_colors,
         }
+
         
-        
+       
+
         # Convert data to DataFrame for printing value in terminal
         data_df = pd.DataFrame(data_list)
         counts_df = pd.DataFrame(latest_counts.items(), columns=['Source', 'Latest Count'])
@@ -129,13 +133,14 @@ def rbinewhome(request):
 
         # Print the DataFrames in terminal
         print("Data List DataFrame:")
-        print(data_df)
+        
+        print(data_df.to_string(index=False, header=True))
         print("\nLatest Counts DataFrame:")
-        print(counts_df)
+        print(counts_df.to_string(index=False, header=True))
         print("\nRecent Statuses DataFrame:")
-        print(statuses_df)
+        print(statuses_df.to_string(index=False, header=True))
         print("\nRecent Colors DataFrame:")
-        print(colors_df)
+        print(colors_df.to_string(index=False, header=True))
         
         # Convert DataFrame to HTML to see html page 
         data_html = data_df.to_html()
@@ -144,17 +149,42 @@ def rbinewhome(request):
         colors_html = colors_df.to_html()
 
         # Print HTML tables in terminal 
-        print("Data List HTML Table:")
-        print(data_html)
-        print("\nLatest Counts HTML Table:")
-        print(counts_html)
-        print("\nRecent Statuses HTML Table:")
-        print(statuses_html)
-        print("\nRecent Colors HTML Table:")
-        print(colors_html)
+        # print("Data List HTML Table:")
+        # print(data_html)
+        # print("\nLatest Counts HTML Table:")
+        # print(counts_html)
+        # print("\nRecent Statuses HTML Table:")
+        # print(statuses_html)
+        # print("\nRecent Colors HTML Table:")
+        # print(colors_html)
         
         
-        return render(request, 'fema/grid123.html', context)
+        return render(request, 'fema/grid_dashboard.html', context)
+    
+    
+        # # Convert the data to DataFrames
+        # data_df = pd.DataFrame(data_list)
+        # counts_df = pd.DataFrame(latest_counts.items(), columns=['Source', 'Latest Count'])
+        # statuses_df = pd.DataFrame(recent_statuses.items(), columns=['Source', 'Recent Status'])
+        # colors_df = pd.DataFrame(recent_colors.items(), columns=['Source', 'Recent Color'])
+
+        # # Convert DataFrames to HTML tables
+        # data_table = data_df.to_html(index=False, escape=False)
+        # counts_table = counts_df.to_html(index=False, escape=False)
+        # statuses_table = statuses_df.to_html(index=False, escape=False)
+        # colors_table = colors_df.to_html(index=False, escape=False)
+
+        # # Prepare the final response
+        # response_data = {
+        #     'data_table': data_table,
+        #     'counts_table': counts_table,
+        #     'statuses_table': statuses_table,
+        #     'colors_table': colors_table
+        # }
+
+        # # Return the response as JSON
+        # return JsonResponse(response_data)
+    
     except Exception as e:
         # Log and print the exception
         traceback.print_exc()
@@ -294,7 +324,7 @@ def rbiget_data_for_popup1(request, source_name):
             model = sebi_log
             
         # Check if the source name exists in 'mca_orders' database
-        elif mca_log.objects.using('mca_orders').filter(source_name=source_name).exists():
+        elif mca_log.objects.using('mca').filter(source_name=source_name).exists():
             db_name = 'mca'
             model = mca_log
         else:
@@ -320,7 +350,12 @@ def rbiget_data_for_popup1(request, source_name):
                 'failure_reason': failure_reason,
                 'date_of_scraping': data.date_of_scraping.strftime('%d-%m-%Y'),
             }
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
+            print("response_data====", response_data)
+            
+            json_results= json.dumps(response_data) 
+            
+            return HttpResponse(json_results, content_type="application/json")
+            
         else:
             return HttpResponse(status=404)
           
@@ -484,7 +519,7 @@ def filter_data(request, source_name, model, db_name):
         
         }
 
-        return render(request, 'fema/gridfilter.html', context)
+        return render(request, 'fema/grid_datefilter.html', context)
     
     except Exception as e:
         # Log and print the exception

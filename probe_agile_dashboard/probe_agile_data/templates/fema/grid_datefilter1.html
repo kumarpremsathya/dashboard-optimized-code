@@ -1,4 +1,5 @@
-{% load static %}<!DOCTYPE html>
+{% load static %}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,12 +7,14 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}"> 
     <link rel="stylesheet" href="css/style.css" type="text/css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <script type="text/javascript" src="{% static 'js/script.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/script.js' %}"></script> 
+
+
     <style>
-         .container{
-        display:grid;
+        .container{
+       display:grid;
        grid-template-rows:8vh 19vh 63vh 10vh;
-       grid-template-columns:300px auto;
+       grid-template-columns:350px auto;
         grid-template-areas: 
         "one two two two"
         "one three three three"
@@ -52,103 +55,52 @@
                     <a href="{% url 'rbinewecb_datefilter' %}"  class="data-source-link" data-source="rbi_ecb"><i class="fa fa-list icons"></i>   RBI_Ecb</a>
                     <a href="{% url 'rbinewodi_datefilter' %}" class="data-source-link" data-source="rbi_odi"><i class="fa fa-list icons"></i>   RBI_Odi</a>
                     <a href="{% url 'rbinewstartupindia_datefilter' %}"  class="data-source-link" data-source="startupindia"><i class="fa fa-list icons"></i> Startup_India</a>
-        
-            </div>
-        </div>
-
-
-        <div class="two">
-            <div class="col-div-6">
-	            <span > Data Extraction Status for Probe Agile Data Sources</span>
-
-	        </div>
-
-        </div>
-
-
-        <div class="three">
-            <div class="box">
-                <P class="align">{{ source_name }}</P>
-             <div style="text-align:center;" class="drop-down">
-				{% comment %} <P style="font-size:20px"> Start Date :&nbsp;"{{ min_date }}" &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;End Date :&nbsp; "{{ max_date }}" </p> {% endcomment %}
-                    <p>
-                        {% if start_date and end_date %}
-                            Start Date: {{ start_date }} | End Date: {{ end_date }}
-                        {% elif past_15_days %}
-                            Start Date: {{ past_15_days.0 }} | End Date: {{ past_15_days.1 }}
-                        {% elif last_month %}
-                            Start Date: {{ last_month.0 }} | End Date: {{ last_month.1 }}
-                        {% endif %}
-                    </p>
-                
-
-          
-                   
-                    <!-- Custom date range filter -->
-                        <form  id="data-filter-form" method="get" onsubmit="return validateCustomDateRange()">
-                            {{ form.date_range }}
-                            <div id="custom-date-fields" style="display:none;">
-                                {{ form.start_date }}
-                                {{ form.end_date }}
-                            </div>
-                            <button type="submit" id="applyButton">Apply</button>
-                        </form>
-                        <a href="#" id="downloadExcel">Download Excel</a>    
-                        <div id="error-message"></div> 
-                       
-                </div>  
                     
-         </div>
-
-     </div>
-
-
-        <div class="four">
-            <div class="content-box">
-				{% comment %} <p>Historic Results for {{ table_name_filter }}</p> {% endcomment %}
-				<br/>
-				<table id="city-table" class="custom-table">
-                  
-                    <tr>
-                   
-                        <th>Status</th>
-                        <th>#Records Available</th>
-                        <th>#Records Scraped</th>
-                        <th>Failure Reason</th>
-                        <th>Scraped On</th>
-                    </tr>
-              
-                    <!-- Loop through your data and display rows -->
-                    {% for item in data %}
-                        <tr>
-                        
-                            <td style="color:{{ item.status_color }}">{{ item.script_status }}</td>
-                            <td >{{ item.data_available }}</td>
-                            <td style="color:{{ item.status_color }}">{{ item.data_scraped }}</td>
-                            <td style="color:{{ item.status_color }}">{{ item.failure_reason }}</td>
-                            <td>{{ item.date_of_scraping }}</td>
+                    <a href="{% url 'mca_roc_datefilter' %}"  class="data-source-link" data-source="mca_roc"><i class="fa fa-list icons"></i>  MCA_Roc</a>
+                    <a href="{% url 'mca_rd_datefilter' %}"  class="data-source-link" data-source="mca_rd"><i class="fa fa-list icons"></i>  MCA_Rd</a>
+                
+                    <a href="{% url 'sebi_so_datefilter' %}"  class="data-source-link" data-source="sebi_ed_cgm"><i class="fa fa-list icons"></i> SEBI_Settlementorder </a>
+                    <a href="{% url 'sebi_ao_datefilter' %}"  class="data-source-link" data-source="sebi_settlementorder"><i class="fa fa-list icons"></i> SEBI_Ao </a>
+                    <a href="{% url 'sebi_ed_datefilter' %}"  class="data-source-link" data-source="sebi_ao"><i class="fa fa-list icons"></i> SEBI_Ed_Cgm </a>
+                    <a href="{% url 'sebi_members_datefilter' %}"  class="data-source-link" data-source="sebi_chairperson_members"><i class="fa fa-list icons"></i>  SEBI_ChairPerson_Members</a>
             
-                        </tr>
-                    {% endfor %}
-               
-            </table>
-		</div>
-    </div>
+                    
+                    <a href="{% url 'irdai_life_insurers_datefilter' %}"  class="data-source-link" data-source="irdai_life_insurers"><i class="fa fa-list icons"></i>  IRDAI_Life_Insurers </a>
+                    <a href="{% url 'irdai_general_insurers_datefilter' %}"  class="data-source-link" data-source="irdai_general_insurers"><i class="fa fa-list icons"></i>  IRDAI_General_Insurers </a>
+                    <a href="{% url 'irdai_health_insurers_datefilter' %}"  class="data-source-link" data-source="irdai_health_insurers"><i class="fa fa-list icons"></i>  IRDAI_Health_Insurers </a>
+                    <a href="{% url 'irdai_reinsurers_datefilter' %}"  class="data-source-link" data-source="irdai_reinsurers"><i class="fa fa-list icons"></i>  IRDAI_Reinsurers </a>
+                    <a href="{% url 'irdai_reinsurer_branches_datefilter' %}"  class="data-source-link" data-source="irdai_reinsurer_branches"><i class="fa fa-list icons"></i>  IRDAI_Reinsurer_Branches </a>
+                    <a href="{% url 'irdai_corporate_surveyors_datefilter' %}"  class="data-source-link" data-source="irdai_corporate_surveyors"><i class="fa fa-list icons"></i>  IRDAI_Corporate_Surveyors </a>
+                    <a href="{% url 'irdai_partner_surveyors_datefilter' %}"  class="data-source-link" data-source="irdai_partner_surveyors"><i class="fa fa-list icons"></i>  IRDAI_Partner_Surveyors </a>
+                    <a href="{% url 'irdai_third_party_administrators_datefilter' %}"  class="data-source-link" data-source="irdai_third_party_administrators"><i class="fa fa-list icons"></i>  IRDAI_Third_Party_Administrators</a>
+                    <a href="{% url 'irdai_web_aggregators_datefilter' %}"  class="data-source-link" data-source="irdai_web_aggregators"><i class="fa fa-list icons"></i>  IRDAI_Web_Aggregators </a>
+                    <a href="{% url 'irdai_insurance_repositories_datefilter' %}"  class="data-source-link" data-source="irdai_insurance_repositories"><i class="fa fa-list icons"></i> IRDAI_Insurance_Repositories</a>
+                    <a href="{% url 'irdai_insurance_marketing_firms_datefilter' %}"  class="data-source-link" data-source="irdai_insurance_marketing_firms"><i class="fa fa-list icons"></i>  IRDAI_Insurance_Marketing_Firms </a>
+                    <a href="{% url 'irdai_corporate_agents_datefilter' %}"  class="data-source-link" data-source="irdai_corporate_agents"><i class="fa fa-list icons"></i>  IRDAI_Corporate_Agents </a>
+                    <a href="{% url 'irdai_telemarketer_datefilter' %}"  class="data-source-link" data-source="irdai_telemarketer"><i class="fa fa-list icons"></i>  IRDAI_Telemarketer </a> 
 
 
-
-        <div class="five">
-            <div class="col-div-4" style="text-align:center;">
-                <p style="color: #f7403b;">Contact us for support : <a href="mailto:agiledatahelp@gmail.com"
-                    style="color: #f7403b;"> agiledatahelp@gmail.com</a></p>
-            </div> 
+                    <a href="{% url 'pfrda_aggregators_datefilter' %}"  class="data-source-link" data-source="pfrda_aggregators"><i class="fa fa-list icons"></i>  PFRDA_Aggregators</a> 
+                    <a href="{% url 'pfrda_cra_datefilter' %}"  class="data-source-link" data-source="pfrda_cra"><i class="fa fa-list icons"></i>  PFRDA_Cra </a> 
+                    <a href="{% url 'pfrda_custodian_datefilter' %}"  class="data-source-link" data-source="pfrda_custodian"><i class="fa fa-list icons"></i>  PFRDA_Custodian </a> 
+                    <a href="{% url 'pfrda_pension_funds_datefilter' %}"  class="data-source-link" data-source="pfrda_pension_funds"><i class="fa fa-list icons"></i>  PFRDA_Pension_Funds </a> 
+                    <a href="{% url 'pfrda_pop_datefilter' %}"  class="data-source-link" data-source="pfrda_pop"><i class="fa fa-list icons"></i>   PFRDA_Pop </a> 
+                    <a href="{% url 'pfrda_pop_se_datefilter' %}"  class="data-source-link" data-source="pfrda_pop_se"><i class="fa fa-list icons"></i>  PFRDA_Pop_Se </a> 
+                    <a href="{% url 'pfrda_ra_individual_datefilter' %}"  class="data-source-link" data-source="pfrda_ra_individual"><i class="fa fa-list icons"></i> PFRDA_Ra_Individual </a> 
+                    <a href="{% url 'pfrda_ra_renewal_datefilter' %}"  class="data-source-link" data-source="pfrda_ra_renewal"><i class="fa fa-list icons"></i>  PFRDA_Ra_Renewal </a> 
+                    <a href="{% url 'pfrda_trustee_bank_datefilter' %}"  class="data-source-link" data-source="pfrda_trustee_bank"><i class="fa fa-list icons"></i>  PFRDA_Trustee_Bank</a> 
+                </div>
         </div>
+        {% block content %}{% endblock content %}
     </div>
 
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-	<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script> 
 	<script>
-        
+
+
+    
+    // function for implementing excel download functionalities  
     document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('downloadExcel').addEventListener('click', function () {
                 var dateRangeDropdown = document.getElementById('id_date_range');
@@ -169,9 +121,9 @@
                 window.location.href = downloadLink;
             });
     });       
-
+  
         
-
+    // function for implementing dropdown functionalities and showing results in table.
     window.validateCustomDateRange = function() {
         var dateRangeDropdown = document.getElementsByName('date_range')[0];
         var startDateInput = document.getElementsByName('start_date')[0];
@@ -263,6 +215,8 @@
     // Call the function to highlight the selected table on page load
     highlightSelectedTable();
     
+
+
 </script>
 
 </body>

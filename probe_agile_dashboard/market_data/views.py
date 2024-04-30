@@ -31,6 +31,8 @@ def table_details(request, table_name):
         'ace_finance_Quarterly',
         'ace_finance_Quarterly_Cons',
         'ace_shp',
+        'ace_Finance_bs',
+        'ace_Finance_cons_bs',
     ]
 
     table_list = [
@@ -47,6 +49,8 @@ def table_details(request, table_name):
                   'ace_Finance_cf',
                   'ace_Finance_cons_cf',
                   'ace_Finance_fr',
+                  'ace_Finance_bs',
+                  'ace_Finance_cons_bs',
                   'Capitaline_standalone',
                   'Capitaline_consolidated',
                   'bse_pledge',
@@ -276,6 +280,8 @@ def table_details2(request):
         'ace_Finance_cf',
         'ace_Finance_cons_cf',
         'ace_Finance_fr',
+        'ace_Finance_bs',
+        'ace_Finance_cons_bs',
         'Capitaline_standalone',
         'Capitaline_consolidated',
         'bse_pledge',
@@ -311,6 +317,8 @@ def table_details2(request):
         'ace_finance_Quarterly',
         'ace_finance_Quarterly_Cons',
         'ace_shp',
+        'ace_Finance_bs',
+        'ace_Finance_cons_bs',
     ]
 
     failure_reasons = scraping_log.objects.filter(status='failure').values_list('reason', flat=True).distinct()
@@ -410,6 +418,8 @@ def get_data_for_popup(request, table_name):
         'ace_finance_Quarterly',
         'ace_finance_Quarterly_Cons',
         'ace_shp',
+        'ace_Finance_bs',
+        'ace_Finance_cons_bs',
     ]
 
     if data:

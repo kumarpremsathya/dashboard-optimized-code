@@ -1,5 +1,5 @@
 from django.shortcuts import render, HttpResponse
-from .models import rbi_log ,sebi_log, mca_log
+from .models import *
 import json
 
 from django.http import JsonResponse,request
@@ -50,7 +50,11 @@ def rbinewhome(request):
         start_date = end_date - timedelta(days=6)
         
         # Combine database queries , List of source names
-        source_names = ['rbi_fema', 'rbi_ecb', 'rbi_odi', 'startupindia', 'sebi_ed_cgm', 'sebi_settlementorder', 'sebi_ao', 'sebi_chairperson_members', 'mca_roc', 'mca_rd']
+        source_names = ['rbi_fema', 'rbi_ecb', 'rbi_odi', 'startupindia', 'sebi_ed_cgm', 'sebi_settlementorder', 'sebi_ao', 'sebi_chairperson_members', 'mca_roc', 'mca_rd',
+                        'irdai_life_insurers', 'irdai_general_insurers', 'irdai_health_insurers', 'irdai_reinsurers', 'irdai_reinsurer_branches',
+                         'irdai_corporate_surveyors', 'irdai_partner_surveyors', 'irdai_third_party_administrators','irdai_web_aggregators',
+                        'irdai_insurance_repositories', 'irdai_insurance_marketing_firms', 'irdai_corporate_agents', 'irdai_telemarketer', 'pfrda_aggregators',  'pfrda_cra', 'pfrda_custodian',
+                        'pfrda_pension_funds', 'pfrda_pop', 'pfrda_pop_se', 'pfrda_ra_individual',  'pfrda_ra_renewal', 'pfrda_trustee_bank']
         
         # Initialize dictionaries to store data
         data = {}
@@ -74,6 +78,14 @@ def rbinewhome(request):
                 # Use 'sebi' database
                 db_name = 'mca'
                 model = mca_log
+            elif irdai_log.objects.using('irdai').filter(source_name=source_name).exists():
+                # Use 'sebi' database
+                db_name = 'irdai'
+                model = irdai_log
+            elif pfrda_log.objects.using('pfrda').filter(source_name=source_name).exists():
+                # Use 'sebi' database
+                db_name = 'pfrda'
+                model = pfrda_log
             else:
                 # Handle other cases or raise an error
                 continue  # or raise an error
@@ -327,6 +339,16 @@ def rbiget_data_for_popup1(request, source_name):
         elif mca_log.objects.using('mca').filter(source_name=source_name).exists():
             db_name = 'mca'
             model = mca_log
+            
+        # Check if the source name exists in 'irdai' database
+        elif irdai_log.objects.using('irdai').filter(source_name=source_name).exists():
+            db_name = 'irdai'
+            model = irdai_log
+            
+             # Check if the source name exists in 'pfrda' database
+        elif pfrda_log.objects.using('pfrda').filter(source_name=source_name).exists():
+            db_name = 'pfrda'
+            model = pfrda_log
         else:
             # Handle other cases or raise an error
             return HttpResponse(status=404)
@@ -530,6 +552,8 @@ def filter_data(request, source_name, model, db_name):
 
 
 
+# rbi urls
+
 def rbinewfema_datefilter(request):
     return filter_data(request, 'rbi_fema', rbi_log, 'rbi')
 
@@ -541,6 +565,8 @@ def rbinewodi_datefilter(request):
 
 def rbinewstartupindia_datefilter(request):
     return filter_data(request, 'startupindia', rbi_log, 'rbi')
+
+# sebi urls
 
 def sebi_so_datefilter(request):
     return filter_data(request, 'sebi_ed_cgm', sebi_log, 'sebi')
@@ -554,12 +580,87 @@ def sebi_ed_datefilter(request):
 def sebi_members_datefilter(request):
     return filter_data(request, 'sebi_chairperson_members', sebi_log, 'sebi')
 
+
+# mca urls
+
 def mca_roc_datefilter(request):
     return filter_data(request, 'mca_roc', mca_log, 'mca')
 
 
 def mca_rd_datefilter(request):
     return filter_data(request, 'mca_rd', mca_log, 'mca')
+
+# irdai urls
+
+
+def irdai_life_insurers_datefilter(request):
+    return filter_data(request, 'irdai_life_insurers', irdai_log, 'irdai')
+
+def irdai_general_insurers_datefilter(request):
+    return filter_data(request, 'irdai_general_insurers', irdai_log, 'irdai')
+
+def irdai_health_insurers_datefilter(request):
+    return filter_data(request, 'irdai_health_insurers', irdai_log, 'irdai')
+
+def irdai_reinsurers_datefilter(request):
+    return filter_data(request, 'irdai_reinsurers', irdai_log, 'irdai')
+
+def irdai_reinsurer_branches_datefilter(request):
+    return filter_data(request, 'irdai_reinsurer_branches', irdai_log, 'irdai')
+
+def irdai_corporate_surveyors_datefilter(request):
+    return filter_data(request, 'irdai_corporate_surveyors', irdai_log, 'irdai')
+
+def irdai_partner_surveyors_datefilter(request):
+    return filter_data(request, 'irdai_partner_surveyors', irdai_log, 'irdai')
+
+def irdai_third_party_administrators_datefilter(request):
+    return filter_data(request, 'irdai_third_party_administrators', irdai_log, 'irdai')
+
+def irdai_web_aggregators_datefilter(request):
+    return filter_data(request, 'irdai_web_aggregators', irdai_log, 'irdai')
+
+def irdai_insurance_repositories_datefilter(request):
+    return filter_data(request, 'irdai_insurance_repositories', irdai_log, 'irdai')
+
+def irdai_insurance_marketing_firms_datefilter(request):
+    return filter_data(request, 'irdai_insurance_marketing_firms', irdai_log, 'irdai')
+
+def irdai_corporate_agents_datefilter(request):
+     return filter_data(request, 'irdai_corporate_agents', irdai_log, 'irdai')
+
+def irdai_telemarketer_datefilter(request):
+    return filter_data(request, 'irdai_telemarketer', irdai_log, 'irdai')
+
+# pfrda urls
+
+def pfrda_aggregators_datefilter(request):
+    return filter_data(request, 'pfrda_aggregators', pfrda_log, 'pfrda')
+
+def pfrda_cra_datefilter(request):
+    return filter_data(request, 'pfrda_cra', pfrda_log, 'pfrda')
+
+def pfrda_custodian_datefilter(request):
+    return filter_data(request, 'pfrda_custodian', pfrda_log, 'pfrda')
+
+def pfrda_pension_funds_datefilter(request):
+    return filter_data(request, 'pfrda_pension_funds', pfrda_log, 'pfrda')
+
+def pfrda_pop_datefilter(request):
+    return filter_data(request, 'pfrda_pop', pfrda_log, 'pfrda')
+
+def pfrda_pop_se_datefilter(request):
+    return filter_data(request, 'pfrda_pop_se', pfrda_log, 'pfrda')
+
+def pfrda_ra_individual_datefilter(request):
+    return filter_data(request, 'pfrda_ra_individual', pfrda_log, 'pfrda')
+
+def pfrda_ra_renewal_datefilter(request):
+    return filter_data(request, 'pfrda_ra_renewal', pfrda_log, 'pfrda')
+
+def pfrda_trustee_bank_datefilter(request):
+    return filter_data(request, 'pfrda_trustee_bank', pfrda_log, 'pfrda')
+
 
 
 
@@ -681,9 +782,6 @@ def export_to_excel(request, data, date_range, start_date, end_date, source_name
 def rbi_tab(request):
     rbi_data= rbi_log.objects.using('rbi').all()
     return render(request,'fema/index.html', {'rbi_data':rbi_data}) 
-
-
-
 
 
 # #function for dashboard functionality

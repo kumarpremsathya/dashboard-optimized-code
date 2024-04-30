@@ -17,6 +17,8 @@
                 <th>Script Status</th>
                 <th>Data Available</th>
                 <th>Data Scraped</th>
+                <th>Total Record Count</th>
+                <th>Source Status</th>
                 <th>Month</th>
                 <th>Year</th>
                 <th>File Name</th>
@@ -27,13 +29,15 @@
             </tr>
         </thead>
         <tbody>
-            {% for entry in rbi_data %}
+            {% for entry in irdai_data %}
                 <tr>
                     <td>{{ entry.Sr_no }}</td>
                     <td>{{ entry.source_name }}</td>
                     <td>{{ entry.script_status }}</td>
                     <td>{{ entry.data_available }}</td>
                     <td>{{ entry.data_scraped }}</td>
+                    <td>{{ entry.total_record_count }}</td>
+                    <td>{{ entry.source_status }}</td>
                     <td>{{ entry.month }}</td>
                     <td>{{ entry.year }}</td>
                     <td>{{ entry.file_name }}</td>

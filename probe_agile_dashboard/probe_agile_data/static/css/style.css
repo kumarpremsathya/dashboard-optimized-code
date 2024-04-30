@@ -11,7 +11,8 @@ body{
 .one{
        
     background-color:white;
-    overflow: scroll; 
+    overflow-y: scroll; /* Add scrollbar vertically */
+    
     }
 
     
@@ -92,6 +93,8 @@ td,th { font-weight: bold; }
   flex-direction: column;
   justify-content: space-evenly;
   font-weight: bold; 
+  word-wrap: break-word;
+  overflow-wrap: break-word; /* Add this line */
 }
 
 .popup-info {
@@ -221,9 +224,9 @@ td,th { font-weight: bold; }
     
     position:absolute;
     top:0%;
-    left: 28%;  
+    left: 38%;  
     font-size:26px;
-    color:white;
+    
     font-weight: bold;
     text-transform:uppercase;
   }

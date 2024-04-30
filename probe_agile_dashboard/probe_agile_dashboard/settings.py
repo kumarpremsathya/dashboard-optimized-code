@@ -78,6 +78,7 @@ WSGI_APPLICATION = 'probe_agile_dashboard.wsgi.application'
 
 
 
+
 DATABASES = {
     'default': {
         'NAME': 'bse',
@@ -123,8 +124,33 @@ DATABASES = {
             'autocommit': True,
         },
     },
+     'irdai': {
+        'NAME': 'irdai',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': 'root1',
+        'PASSWORD': 'Mysql1234$',
+        'HOST': '4.213.77.165',
+        'PORT': 3306,
+        'OPTIONS': {
+            'autocommit': True,
+        },
+    },
+     'pfrda': {
+        'NAME': 'pfrda',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': 'root1',
+        'PASSWORD': 'Mysql1234$',
+        'HOST': '4.213.77.165',
+        'PORT': 3306,
+        'OPTIONS': {
+            'autocommit': True,
+        },
+    },
 }
 
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Example using Redis as the message broker
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
 
 # Password validation
